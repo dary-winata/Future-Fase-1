@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: monitoring-pv
+  labels:
+    type: local
+spec:
+  storageClassName: monitoring
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/tmp/kube-volume/monitoring-vol"

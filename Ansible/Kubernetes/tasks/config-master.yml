@@ -1,0 +1,42 @@
+---
+- name: init kube cluster
+  shell:
+    cmd: "kubeadm init --apiserver-advertise-address={{ kubernetes_server_ip }} --node-name {{ kubernetes_server_name }} --pod-network-cidr={{ kubernetes_server_network }}"
+  args:
+    executable: /bin/bash
+    
+- name: Generate join command
+  shell:
+    cmd: kubeadm token create --print-join-command
+  args:
+    executable: /bin/bash
+  register: join_command
+
+- name: create directory
+  file:
+    path: "{{ network_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: template flannel
+  template:
+    src: flannel.yaml
+    dest: "{{ network_dir }}/flannel.yaml"
+    owner: root
+    group: root
+    mode: 0755
+
+- name: save join command
+  shell:
+    cmd: "{{ item }}" 
+  args:
+    executable: /bin/bash
+  with_items:
+    - echo "#/bin/bash" > /root/join-command.sh
+    - echo "{{ join_command.stdout }}" >> /root/join-command.sh
+    - mkdir -p $HOME/.kube
+    - cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    - chown $(id -u):$(id -g) $HOME/.kube/config
+    - "kubectl apply -f {{ network_dir }}/flannel.yaml"

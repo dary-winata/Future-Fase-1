@@ -1,0 +1,36 @@
+---
+# - name: move kubernetes file
+#   copy:
+#     src: "{{ kubefile_path }}"
+#     dest: "{{ kubefile_config_directory }}"
+#     owner: root
+#     group: root
+#     mode: 0755
+#     remote_src: yes
+
+# - name: copy kustomization file
+#   template:
+#     src: kustomization.yaml
+#     dest: /tmp/kubeapply/kustomization.yaml
+#     owner: root
+#     group: root
+#     mode: 0755
+
+# - name: delete file
+#   shell:
+#     cmd: rm -f "{{ kubefile_path }}"
+#   args:
+#     executable: /bin/bash
+
+- name: config node roles
+  shell:
+    cmd: "kubectl label nodes {{ nodes_linux }} {{ key_roles }}={{ value_roles }} --overwrite"
+  args:
+    executable: /bin/bash
+  ignore_errors: yes
+
+- name: kube apply
+  shell:
+    cmd: kubectl apply -f "{{ kubefile_directory }}"
+  args:
+    executable: /bin/bash

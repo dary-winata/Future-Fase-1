@@ -1,0 +1,11 @@
+- name: get install variable
+  shell:
+    cmd: docker --version | awk '{print $3}' | sed s/,//g
+  args:
+    executable: /bin/bash
+  register: docker_client_version
+  ignore_errors: yes
+
+- name: print installed docker
+  debug:
+    var: docker_client_version.stdout

@@ -1,0 +1,53 @@
+---
+- name: disable swap system and turn off
+  block:
+    - name: remove fstab
+      mount:
+        name: "{{ item }}"
+        fstype: swap
+        state: absent
+      with_items:
+        - swap
+        - none
+
+    - name: disable all swap system
+      shell:
+        cmd: swapoff -a
+      args:
+        executable: /bin/bash
+  when: swap_line_check > 1 
+
+- name: open firewall for kubernetes Master
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: enabled
+  loop: "{{ port_master }}"
+  when: type == "Master"
+
+- name: open firewall for kubernetes Master
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: enabled
+  loop: "{{ port_worker }}"
+  when: type == "Node"
+
+- name: reload service firewalld
+  systemd:
+    name: firewalld
+    state: reloaded
+
+- name: install kubernetes
+  yum:
+    name: "{{ item }}"
+  with_items:
+    - "kubelet-{{ kubernetes_user_version }}"
+    - "kubeadm-{{ kubernetes_user_version }}"
+    - "kubectl-{{ kubernetes_user_version }}"
+
+- name: start and enable
+  service:
+    name: kubelet
+    state: started
+    enabled: yes

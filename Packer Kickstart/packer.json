@@ -1,0 +1,72 @@
+{
+    "builders": [{
+        "type": "virtualbox-iso",
+        "guest_os_type": "RedHat_64",
+        "boot_command": [
+            "<tab><wait>",
+            "text ks=http://{{.HTTPIP}}:{{.HTTPPort}}/private/centos7/blibli_centos.cfg<enter>"
+        ],
+        "boot_wait": "5s",
+        "iso_urls": [
+            "iso/{{user `iso_name`}}",
+            "{{user `iso_repo`}}"
+        ],
+        "iso_checksum": "{{user `iso_key_type`}}:{{user `iso_key`}}",
+        "http_directory": "http",
+        "ssh_username": "root",
+        "ssh_password": "{{user `ssh_password`}}",
+        "ssh_port": 22,
+        "ssh_wait_timeout": "10000s",
+        "vboxmanage": [
+            [
+                "modifyvm",
+                "{{.Name}}",
+                "--memory",
+                "{{user `ram`}}"
+            ],
+            [
+                "modifyvm",
+                "{{.Name}}",
+                "--cpus",
+                "{{user `cpu`}}"
+            ],
+            [
+                "modifyvm",
+                "{{.Name}}",
+                "--cableconnected1",
+                "on"
+            ]
+        ],
+        "disk_size": "{{user `disk_size`}}",
+        "headless": "false",
+        "shutdown_command": "echo 'vagrant'|sudo -S shutdown -P now",
+        "vm_name": "{{user `vm_name`}}"
+    }],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "script/fresh-install.sh"
+        }
+    ],
+    "variables": {
+        "software_type": "virtualbox-iso",
+        "iso_name": "CentOS-7-x86_64-Minimal-2009.iso",
+        "iso_repo": "",
+        "iso_key": "07B94E6B1A0B0260B94C83D6BB76B26BF7A310DC78D7A9C7432809FB9BC6194A",
+        "iso_key_type": "sha256",
+        "cpu": "2",
+        "ram": "2048",
+        "disk_size": "10240",
+        "ks_path": "ks/private/blibli_centos.cfg",
+        "ks_name": "blibli_centos.cfg",
+        "vm_name": "blibli-project",
+        "ansible_playbook": "ansible/private/ansible.yml",
+        "output_name": "blibli-webserver-project",
+        "ssh_password": "centos",
+        "type" : "Master"
+    },
+    "post-processors": [{
+        "type": "vagrant",
+        "output": "blibli-project-master.box"
+    }]
+}

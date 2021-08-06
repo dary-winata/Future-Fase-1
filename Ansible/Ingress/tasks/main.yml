@@ -1,0 +1,8 @@
+---
+# tasks file for ingress
+- name: check ingress
+  include: check.yaml
+
+- name: install ingress controller
+  include: install.yaml
+  when: ingress_check_install.stdout | length < 1

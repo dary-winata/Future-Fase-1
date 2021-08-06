@@ -1,0 +1,36 @@
+---
+- name: save join command
+  shell:
+    cmd: "{{ item }}" 
+  args:
+    executable: /bin/bash
+  with_items:
+    - curl -LO https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz
+    - tar -xvf node_exporter-0.18.1.linux-amd64.tar.gz
+    - mv node_exporter-0.18.1.linux-amd64/node_exporter /usr/local/bin/
+    - useradd -rs /bin/false node_exporter
+
+- name: add template for service
+  template:
+    src: node_exporter.service
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0755
+
+- name: service enable and start
+  service:
+    name: node_exporter
+    state: started
+    enabled: yes
+
+- name: open firewall for node exporter
+  firewalld:
+    port: "9100/tcp"
+    permanent: yes
+    state: enabled
+    
+- name: reload service firewalld
+  systemd:
+    name: firewalld
+    state: reloaded

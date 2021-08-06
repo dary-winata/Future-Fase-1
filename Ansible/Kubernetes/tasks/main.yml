@@ -1,0 +1,15 @@
+---
+- name: check installation docker
+  include: check.yml
+
+- name: install docker
+  include: install.yml
+  when: kubernetes_client_version.stdout | length == 0 or  kubernetes_user_version != kubernetes_client_version.stdout
+
+- name: config Kubernetes
+  include: config.yml
+  when: config
+
+- name: apply kubernetes file
+  include: apply.yml
+  when: apply

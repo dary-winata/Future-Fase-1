@@ -1,0 +1,27 @@
+---
+- name: insert template repo
+  template:
+    src: kubernetes.repo
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: wheel
+    mode: 0770
+
+- name: get install variable
+  shell:
+    cmd: kubeadm version | awk '{print $5}' | sed 's/"//g; s/GitVersion:v//g; s/,//g'
+  args: 
+    executable: /bin/bash
+  register: kubernetes_client_version
+  ignore_errors: yes
+
+- name: print version
+  debug:
+    var: kubernetes_client_version.stdout
+
+- name: check swap
+  shell:
+    cmd: cat /proc/swaps | wc -l
+  args:
+    executable: /bin/bash
+  register: swap_line_check
