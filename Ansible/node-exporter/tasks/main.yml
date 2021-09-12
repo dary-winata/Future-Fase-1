@@ -1,4 +1,0 @@
----
-# tasks file for docker
-- name: install docker server version
-  include: install.yml

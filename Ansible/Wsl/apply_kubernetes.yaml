@@ -1,0 +1,38 @@
+- name: configurasi awal
+  hosts: kubemaster
+  remote_user: root
+  become: yes
+  vars:
+    kubernetes_file:
+      - "/var/kubernetes/namespace"
+      # - "/var/kubernetes/cert-manager"
+      # - "/var/kubernetes/metallb"
+      # - "https://raw.githubusercontent.com/metallb/metallb/v0.10.0/manifests/metallb.yaml"
+      - "/var/kubernetes/Nfs-Storage"
+      # - "/var/kubernetes/node_exporter"
+      # - "/var/kubernetes/kube-metrics"
+      - "/var/kubernetes/secrets"
+      - "/var/kubernetes/database"
+      - "/var/kubernetes/webservice"
+      # - "/var/kubernetes/Prometheus"
+      # - "/var/kubernetes/Grafana"
+  tasks:
+    - name: copy file from wsl to kubemaster
+      copy:
+        src: /var/kubernetes/
+        dest: /var/kubernetes
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: kube apply
+      shell:
+        cmd: "kubectl apply -f {{ item }}"
+      args:
+        executable: /bin/bash
+      loop: "{{ kubernetes_file }}"
+
+    - name: delete folder 
+      file:
+        state: absent
+        path: /var/kubernetes/

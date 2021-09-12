@@ -6,6 +6,7 @@ metadata:
   annotations:
     prometheus.io/scrape: 'true'
     prometheus.io/port:  '9090'
+  namespace: monitoring
 spec:
   selector:
     app: prometheus-server
@@ -13,17 +14,15 @@ spec:
   ports:
     - port: 9090
       targetPort: 9090
-      nodePort: 30115
-  type: NodePort
-  # clusterIP: None
-
+  type: ClusterIP
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: monitoring-pv-claim
+  name: prometheus-pv-claim
+  namespace: monitoring
 spec:
-  storageClassName: monitoring
+  storageClassName: managed-nfs-storage
   accessModes:
     - ReadWriteMany
   resources:
@@ -35,6 +34,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
+  namespace: monitoring
 spec:
   selector:
     matchLabels:
@@ -67,4 +67,5 @@ spec:
           defaultMode: 420
           name: prometheus-server-conf
       - name: prometheus-storage-volume
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: prometheus-pv-claim

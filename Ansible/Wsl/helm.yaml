@@ -1,0 +1,59 @@
+- name: configurasi awal
+  hosts: kubemaster
+  remote_user: root
+  become: yes
+  vars:
+    helm_repo:
+      - ingress-nginx https://kubernetes.github.io/ingress-nginx
+      - jetstack https://charts.jetstack.io
+    helm_download:
+      - "ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace --values /root/ingress-nginx.yaml"
+      - "cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.5.3 --set installCRDs=true"
+    prerequest_var:
+      - "bash /var/helm.sh"
+  tasks:
+    - name: download file
+      get_url:
+        url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+        dest: /var/helm.sh
+        mode: '0700'
+    
+    - name: copy file from wsl to kubemaster
+      copy:
+        src: ingress-nginx.yaml
+        dest: /root/
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: prerequest
+      shell:
+        cmd: "{{ item }}"
+      args:
+        executable: /bin/bash
+      loop: "{{ prerequest_var }}"
+
+    - name: install helm repo
+      shell:
+        cmd: "helm repo add {{ item }}"
+      args:
+        executable: /bin/bash
+      loop: "{{ helm_repo }}"
+    
+    - name: update repo
+      shell:
+        cmd: helm repo update
+      args:
+        executable: /bin/bash
+
+    - name: install all depedency from helm
+      shell:
+        cmd: "helm install {{ item }}"
+      args:
+        executable: /bin/bash
+      loop: "{{ helm_download }}"
+    
+    - name: copy file from wsl to kubemaster
+      file:
+        path: /root/ingress-nginx.yaml
+        state: absent

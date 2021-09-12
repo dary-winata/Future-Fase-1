@@ -1,0 +1,29 @@
+- name: configurasi awal
+  hosts: all
+  remote_user: root
+  become: yes
+  tasks:
+    - name: restart ip tables
+      shell:
+        cmd: "{{ item }}"
+      args:
+        executable: /bin/bash
+      loop:
+        - "iptables --flush"
+        - "iptables -tnat --flush"
+    
+    - name: restart service
+      service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - "docker"
+        - "kubelet"
+      when: ansible_hostname != 'nfs-server'
+
+    - name: kube apply
+      shell:
+        cmd: kubectl taint nodes --all node-role.kubernetes.io/master-
+      args:
+        executable: /bin/bash
+      when: ansible_hostname == 'kubemaster'

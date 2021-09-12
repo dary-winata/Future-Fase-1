@@ -1,40 +1,36 @@
 Vagrant.configure("2") do |config|
   config.vm.define "kubemaster" do |kubemaster|
-    kubemaster.vm.box = "blibli-project"
+    kubemaster.vm.box = "blibli-future/kubemaster"
     kubemaster.vm.hostname = "kubemaster"
     kubemaster.vm.boot_timeout = 100
     kubemaster.ssh.username = "root"
     kubemaster.ssh.password = "centos"
     kubemaster.vm.network "private_network", ip: "192.168.20.11"
-    kubemaster.vm.provision "file", source: "D:/Pekerjaan/File/Blibli Project/Batch 1/Kubernetes/Prometheus", destination: "/tmp/kubeapply/Prometheus"
+    kubemaster.vm.provision "file", source: "D:/Pekerjaan/File/Blibli Project/Batch 1/Kubernetes/Webservice-Testing/webservice.yaml", destination: "/tmp/kubeapply/testing/webservice.yaml"
     kubemaster.vm.provider :virtualbox do |vb|
       vb.name="kubernetes master"
+      vb.customize ["modifyvm", :id, "--cpus", "4"]
+      vb.customize ["modifyvm", :id, "--memory", "4096"]
     end
     kubemaster.vm.provision "ansible_local" do |ansible|
-      ansible.groups
       ansible.extra_vars = {
         kubernetes_server_ip: "192.168.20.11",
         kubernetes_server_name: "kubemaster",
         kubernetes_server_network: "10.244.0.0/16",
         type: "Master",
-        config: false,
-        apply: true,
-        # kubefile_path: "/tmp/webservice.yaml",
-        # kubefile_config_directory: "/tmp/kubeapply/webservice.yaml",
-        kubefile_directory: "/tmp/kubeapply/Prometheus",
-        nodes_linux: "webservice-mariadb",
-        key_roles: "servicetype", 
-        value_roles: "database-mariadb",
+        config: true,
+        apply: false,
+        kubefile_directory: "/tmp/kubeapply/testing", 
         network_dir: "/tmp/kube-network"
       }
       ansible.galaxy_roles_path = "ansible/private/roles"
-      #ansible.playbook = "ansible/private/ansible-testing.yaml"
-      ansible.playbook = "ansible/private/ansible.yml"
+      ansible.playbook = "ansible/private/ansible-kubeserver.yaml"
+      # ansible.playbook = "ansible/private/ansible-testing.yaml"
     end
   end
   
   config.vm.define "Webservice-Wordpress" do |webservice|
-    webservice.vm.box = "blibli-project"
+    webservice.vm.box = "blibli-future/worker"
     webservice.vm.hostname = "webservice-nginx"
     webservice.vm.boot_timeout = 100
     webservice.ssh.username = "root"
@@ -42,21 +38,23 @@ Vagrant.configure("2") do |config|
     webservice.vm.network "private_network", ip: "192.168.20.12"
     webservice.vm.provider :virtualbox do |vb|
       vb.name="Webservice Wordpress"
+      vb.customize ["modifyvm", :id, "--cpus", "4"]
+      vb.customize ["modifyvm", :id, "--memory", "8192"]
     end
     webservice.vm.provision "ansible_local" do |ansible|
       ansible.extra_vars = {
         type: "Node",
         config: true,
         apply: false,
+        nfs_server: false
       }
       ansible.galaxy_roles_path = "ansible/private/roles"
-      #ansible.playbook = "ansible/private/ansible-testing.yaml"
-      ansible.playbook = "ansible/private/ansible.yml"
+      ansible.playbook = "ansible/private/ansible-worker.yaml"
     end
   end
 
   config.vm.define "Webservice-MariaDb" do |database|
-    database.vm.box = "blibli-project"
+    database.vm.box = "blibli-future/worker"
     database.vm.hostname = "webservice-MariaDb"
     database.vm.boot_timeout = 100
     database.ssh.username = "root"
@@ -64,38 +62,40 @@ Vagrant.configure("2") do |config|
     database.vm.network "private_network", ip: "192.168.20.13"
     database.vm.provider :virtualbox do |vb|
       vb.name="Webservice MariaDb"
+      vb.customize ["modifyvm", :id, "--cpus", "4"]
+      vb.customize ["modifyvm", :id, "--memory", "8192"]
     end
     database.vm.provision "ansible_local" do |ansible|
       ansible.extra_vars = {
         type: "Node",
         config: true,
-        apply: false
+        apply: false,
+        nfs_server: false
       }
       ansible.galaxy_roles_path = "ansible/private/roles"
-      ansible.playbook = "ansible/private/ansible.yml"
-      #ansible.playbook = "ansible/private/ansible-testing.yaml"
+      ansible.playbook = "ansible/private/ansible-worker.yaml"
     end
   end
 
-  # config.vm.define "Monitoring" do |monitoring|
-  #   monitoring.vm.box = "blibli-project"
-  #   monitoring.vm.hostname = "Monitoring"
-  #   monitoring.vm.boot_timeout = 100
-  #   monitoring.ssh.username = "root"
-  #   monitoring.ssh.password = "centos"
-  #   monitoring.vm.network "private_network", ip: "192.168.20.14"
-  #   monitoring.vm.provider :virtualbox do |vb|
-  #     vb.name="Monitoring"
-  #   end
-  #   monitoring.vm.provision "ansible_local" do |ansible|
-  #     ansible.extra_vars = {
-  #       type: "Node",
-  #       config: true,
-  #       apply: false
-  #     }
-  #     ansible.galaxy_roles_path = "ansible/private/roles"
-  #     ansible.playbook = "ansible/private/ansible.yml"
-  #     #ansible.playbook = "ansible/private/ansible-testing.yaml"
-  #   end
-  # end
+  config.vm.define "Nfs-Server" do |nfs|
+    nfs.vm.box = "blibli-future/nfs"
+    nfs.vm.hostname = "nfs-server"
+    nfs.vm.boot_timeout = 100
+    nfs.ssh.username = "root"
+    nfs.ssh.password = "centos"
+    nfs.vm.network "private_network", ip: "192.168.20.14"
+    nfs.vm.provider :virtualbox do |vb|
+      vb.name="nfs-server"
+      vb.customize ["modifyvm", :id, "--cpus", "4"]
+      vb.customize ["modifyvm", :id, "--memory", "4096"]
+    end
+    nfs.vm.provision "ansible_local" do |ansible|
+      ansible.extra_vars = {
+        nfs_server: true
+      }
+      ansible.galaxy_roles_path = "ansible/private/roles"
+      ansible.playbook = "ansible/private/ansible-nfs-server.yaml"
+      #ansible.playbook = "ansible/private/ansible-testing.yaml"
+    end
+  end
 end

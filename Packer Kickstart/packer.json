@@ -54,9 +54,9 @@
         "iso_repo": "",
         "iso_key": "07B94E6B1A0B0260B94C83D6BB76B26BF7A310DC78D7A9C7432809FB9BC6194A",
         "iso_key_type": "sha256",
-        "cpu": "2",
-        "ram": "2048",
-        "disk_size": "10240",
+        "cpu": "4",
+        "ram": "8192",
+        "disk_size": "30720",
         "ks_path": "ks/private/blibli_centos.cfg",
         "ks_name": "blibli_centos.cfg",
         "vm_name": "blibli-project",
@@ -67,6 +67,6 @@
     },
     "post-processors": [{
         "type": "vagrant",
-        "output": "blibli-project-master.box"
+        "output": "blibli-project-nfs.box"
     }]
 }
